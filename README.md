@@ -74,8 +74,8 @@ configure wireguard at startup:
 | Parameter | Function |
 | :----: | --- |
 | `-p 51820/udp` | Wireguard port. |
-| `-e DEBUG=[0|1] | Enable debug mode for scripts, default off. |
-| `-e NAT=[0|1] | Enable NAT using iptables, default off. Should be enabled on the server side, and only there. |
+| `-e DEBUG=[0/1]` | Enable debug mode for scripts, default off. |
+| `-e NAT=[0/1]` | Enable NAT using iptables, default off. Should be enabled on the server side, and only there. |
 | `-e TZ=Europe/Berlin` | Specify a timezone to use e.g. Europe/Berlin. |
 | `-e SERVER_IP=x.x.x.x` | External IP or domain name for container host. Used in server mode to create a new peer configuration. If not set or set to `auto`, the container will try to determine and set the external IP automatically with help of icanhazip.com |
 | `-e SERVER_PORT=51820` | External port for container host. Used in server mode. |
