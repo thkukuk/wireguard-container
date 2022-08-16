@@ -1,0 +1,35 @@
+#!/bin/bash
+
+DEBUG=${DEBUG:-"0"}
+
+[ "${DEBUG}" = "1" ] && set -x
+
+if [ ! $# -gt 0 ]; then
+    echo "Usage: show-peer <peer ID> ..."
+    exit 1
+fi
+
+for i in "$@"; do
+
+    NAME=peer_${i//[^[:alnum:]_-]}
+
+    if [ "$NAME" = "peer_" ]
+    then
+        echo "ERROR: invalid peer ID: '$i'"
+        exit 1
+    fi
+
+    if [ ! -e "/etc/wireguard/$NAME/wg0.key" ]
+    then
+	echo "ERROR: peer ID '$i' does not exist"
+        exit 1
+    fi
+
+    echo
+    echo "Peer \"$i\" config, create them on the peer using the following command:"
+    echo "cat > /etc/wireguard/wg0.conf << EOF"
+cat /etc/wireguard/"$NAME"/wg0.conf
+    echo "EOF"
+    echo
+    qrencode -t ansiutf8 < "/etc/wireguard/$NAME/wg0.conf"
+done
