@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- OBS-ExcludeArch: i586 s390 -->
+
+<image schemaversion="6.9" name="wireguard-image" xmlns:suse_label_helper="com.suse.label_helper">
+  <description type="system">
+    <author>Thorsten Kukuk</author>
+    <contact>kukuk@suse.com</contact>
+    <specification>wireguard container</specification>
+  </description>
+  <preferences>
+    <type
+      image="docker"
+      derived_from="obsrepositories:/opensuse/busybox#latest">
+      <containerconfig
+        name="wireguard"
+        tag="latest"
+        additionaltags="%PKG_VERSION%,%PKG_VERSION%-%RELEASE%"
+        maintainer="Thorsten Kukuk &lt;kukuk@suse.com&gt;">
+        <subcommand execute="start"/>
+	<expose>
+	  <port number='51820/udp'/>
+	</expose>
+        <volumes>
+          <volume name="/etc/wireguard"/>
+        </volumes>
+        <labels>
+          <suse_label_helper:add_prefix prefix="de.thkukuk.wireguard">
+            <label name="org.opencontainers.image.title" value="Wireguard VPN Container"/>
+            <label name="org.opencontainers.image.description" value="Small image containing wireguard tools to act as server and client."/>
+            <label name="org.opencontainers.image.version" value="%PKG_VERSION%-%RELEASE%"/>
+            <label name="org.opencontainers.image.created" value="%BUILDTIME%"/>
+            <label name="org.openbuildservice.disturl" value="%DISTURL%"/>
+          </suse_label_helper:add_prefix>
+        </labels>
+        <history author="Thorsten Kukuk &lt;kukuk@suse.com&gt;">Small Wireguard VPN Server and Client</history>
+      </containerconfig>
+    </type>
+    <version>1.0.0</version>
+    <packagemanager>zypper</packagemanager>
+    <rpm-excludedocs>false</rpm-excludedocs>
+  </preferences>
+  <repository>
+    <source path="obsrepositories:/"/>
+  </repository>
+  <packages type="bootstrap">
+    <package name="bash"/>
+    <package name="wireguard-tools"/>
+    <package name="qrencode"/>
+    <package name="iptables"/>
+    <package name="inotify-tools"/>
+    <package name="curl"/>
+    <package name="mandoc"/>
+    <package name="less"/>
+    <package name="timezone"/>
+    <package name="-busybox-man"/>
+    <package name="-busybox-less"/>
+  </packages>
+</image>

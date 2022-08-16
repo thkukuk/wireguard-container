@@ -1,0 +1,114 @@
+#!/bin/bash
+
+DEBUG=${DEBUG:-"0"}
+
+[ "${DEBUG}" = "1" ] && set -x
+
+export PATH=/usr/local/bin:/usr/sbin:/sbin:${PATH}
+
+# Create files with secure permissions
+umask 0077
+
+setup_timezone() {
+    if [ -n "$TZ" ]; then
+	TZ_FILE="/usr/share/zoneinfo/$TZ"
+	if [ -f "$TZ_FILE" ]; then
+	    echo "Setting container timezone to: $TZ"
+	    ln -snf "$TZ_FILE" /etc/localtime
+	else
+	    echo "Cannot set timezone \"$TZ\": timezone does not exist."
+	fi
+    fi
+}
+
+setup_wg0_conf() {
+	echo "Initialize wireguard config - /etc/wireguard/wg0.conf"
+
+	. /usr/local/libexec/setup_env
+
+	SUBNET4_IP=$(echo "$SUBNET4" | awk 'BEGIN{FS=OFS="."} NF--').1
+
+	echo -n "* Public key: "
+	wg genkey | tee /etc/wireguard/private.key | wg pubkey | tee /etc/wireguard/pub.key
+	chmod 0644 /etc/wireguard/pub.key
+	SERVER_PRIVATE_KEY=$(cat /etc/wireguard/private.key)
+	cat > /etc/wireguard/wg0.conf << EOF
+[Interface]
+Address = ${SUBNET4_IP}/24
+ListenPort = ${SERVER_PORT}
+PrivateKey = ${SERVER_PRIVATE_KEY}
+EOF
+	if [ "$NAT" -eq 1 ]; then
+	    cat >> /etc/wireguard/wg0.conf << EOF
+PostUp = iptables -t nat -A POSTROUTING -o $INTERFACE -j MASQUERADE; iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400; iptables -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400
+PostDown = iptables -t nat -D POSTROUTING -o $INTERFACE -j MASQUERADE; iptables -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400; iptables -t mangle -D POSTROUTING -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400
+EOF
+	fi
+}
+
+wireguard_up() {
+    for conf in /etc/wireguard/wg*.conf; do
+	echo "Start wireguard interface ($conf)"
+	wg-quick up "$conf"
+    done
+
+    for peer in /etc/wireguard/peer_*; do
+        PEER_PUBLIC_KEY=$(cat "$peer/pub.key")
+        CONFIG="$peer/wg0.conf"
+        IP=$(awk '/Address/{print $3}' "$CONFIG")
+	echo "* Add peer $(basename "${peer}" | sed -e 's|^peer_||g')"
+        wg set wg0 peer "$PEER_PUBLIC_KEY" allowed-ips "$IP"
+    done
+}
+
+wireguard_down() {
+    for conf in /etc/wireguard/wg*.conf
+    do
+	echo "Stop wireguard interface ($conf)"
+        wg-quick down "$conf"
+    done
+}
+
+quit () {
+    echo "Stopping wireguard"
+    wireguard_down
+    if [ "$NAT" -eq 1 ]; then
+	iptables -t nat -D POSTROUTING -o "$INTERFACE" -j MASQUERADE
+    fi
+    exit 0
+}
+
+setup_timezone
+
+echo "Starting setup..."
+INTERFACE=${INTERFACE:-eth0}
+echo "* Interface is set to ${INTERFACE}"
+NAT=${NAT:-0}
+if [ "$NAT" -eq 1 ]; then
+	echo "* NAT enabled"
+else
+	echo "* NAT diabled"
+fi
+
+if [ ! -e /etc/wireguard/wg0.conf ]; then
+    setup_wg0_conf
+fi
+
+trap quit TERM INT QUIT
+
+wireguard_up
+
+if [ "$NAT" -eq 1 ]
+then
+    echo "Setup NAT"
+    iptables -t nat -A POSTROUTING -o "$INTERFACE" -j MASQUERADE
+fi
+
+while inotifywait -e modify -e create /etc/wireguard
+do
+  wireguard_down
+  wireguard_up
+done & wait $!
+
+# something did go wrong...
+exit 1

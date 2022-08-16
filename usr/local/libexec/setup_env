@@ -1,0 +1,14 @@
+# get public ip
+if [ -z "$SERVER_IP" ] || [ "$SERVER_IP" = "auto" ]; then
+    SERVER_IP=$(curl -s icanhazip.com)
+fi
+echo "* External server address is set to $SERVER_IP"
+SERVER_PORT=${SERVER_PORT:-51820}
+echo "* External server port is set to ${SERVER_PORT}"
+SUBNET4=${SUBNET4:-192.168.216.0}
+echo "* Internal IPv4 subnet is set to ${SUBNET4}"
+if [ -n "${SUBNET6}" ]; then
+    echo "* Internal IPv6 subnet is set to ${SUBNET6}"
+fi
+ALLOWEDIPS=${ALLOWEDIPS:-0.0.0.0/0, ::/0}
+echo "* AllowedIPs for peers ${ALLOWEDIPS}"

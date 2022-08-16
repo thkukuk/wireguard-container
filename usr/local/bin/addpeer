@@ -1,0 +1,75 @@
+#!/bin/bash
+
+DEBUG=${DEBUG:-"0"}
+
+[ "${DEBUG}" = "1" ] && set -x
+
+# Create files with secure permissions
+umask 0077
+
+NAME=peer_${1//[^[:alnum:]_-]}
+
+if [ "$NAME" = "peer_" ]
+then
+    echo "Usage: addpeer <peer ID>"
+    exit 1
+fi
+
+if [ ! -e "/etc/wireguard/$NAME/pub.key" ]
+then
+    echo "Initialize wireguard peer config - /etc/wireguard/$NAME/wg0.conf"
+    . /usr/local/libexec/setup_env
+
+    mkdir -p "/etc/wireguard/$NAME"
+
+    wg genkey | tee "/etc/wireguard/$NAME/private.key" | wg pubkey > "/etc/wireguard/$NAME/pub.key"
+
+    SERVER_PUB_KEY=$(cat /etc/wireguard/pub.key)
+    PEER_PRIVATE_KEY=$(cat "/etc/wireguard/$NAME/private.key")
+
+    SUBNET4_IP=$(echo "$SUBNET4" | awk 'BEGIN{FS=OFS="."} NF--')
+    # create client's address
+    for idx in {2..254}; do
+        PROPOSED_IP="${SUBNET4_IP}.${idx}"
+        if ! grep -q -R "${PROPOSED_IP}" /etc/wireguard/peer_*/wg0.conf 2> /dev/null; then
+          PEER_IP="${PROPOSED_IP}"
+          break
+        fi
+    done
+
+    # create config
+    cat > "/etc/wireguard/$NAME/wg0.conf" << EOF
+[Interface]
+PrivateKey = $PEER_PRIVATE_KEY
+Address = $PEER_IP/32
+EOF
+    if [ -n "$PEERDNS" ]; then
+	if [ "$PEERDNS" = "auto" ]; then
+	    DNS=${SUBNET4_IP}.1
+	else
+	    DNS=${PEERDNS}
+	fi
+	echo "DNS=${DNS}" >> "/etc/wireguard/$NAME/wg0.conf"
+    fi
+    cat >> "/etc/wireguard/$NAME/wg0.conf" << EOF
+
+[Peer]
+PublicKey = $SERVER_PUB_KEY
+Endpoint = $SERVER_IP:$SERVER_PORT
+AllowedIPs = $ALLOWEDIPS
+EOF
+fi
+
+echo
+echo "Peer \"$1\" config, you can create using following cmds:"
+echo "cat > /etc/wireguard/wg0.conf << EOF"
+cat /etc/wireguard/"$NAME"/wg0.conf
+echo "EOF"
+echo "systemctl enable --now wg-quick@wg0.service"
+echo
+qrencode -t ansiutf8 < "/etc/wireguard/$NAME/wg0.conf"
+#qrencode -o "/etc/wireguard/${NAME}/${1}.png" < "/etc/wireguard/${NAME}/wg0.conf"
+
+# Creating the config will trigger a restart of wireguard. So if we call this, we run in a race while the device does not exist
+#echo "Add $1 ($NAME) to wireguard server"
+#wg set wg0 peer "$(cat /etc/wireguard/${NAME}/pub.key)" allowed-ips "$(awk '/Address/{print $3}' /etc/wireguard/$NAME/wg0.conf)"
