@@ -61,11 +61,10 @@ EOF
 fi
 
 echo
-echo "Peer \"$1\" config, you can create using following cmds:"
+echo "Peer \"$1\" config, create them on the peer using the following command:"
 echo "cat > /etc/wireguard/wg0.conf << EOF"
 cat /etc/wireguard/"$NAME"/wg0.conf
 echo "EOF"
-echo "systemctl enable --now wg-quick@wg0.service"
 echo
 qrencode -t ansiutf8 < "/etc/wireguard/$NAME/wg0.conf"
 #qrencode -o "/etc/wireguard/${NAME}/${1}.png" < "/etc/wireguard/${NAME}/wg0.conf"
