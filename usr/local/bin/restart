@@ -1,0 +1,6 @@
+#!/bin/sh
+
+touch /etc/wireguard/restart && rm -f /etc/wireguard/restart
+
+echo "Restart of wireguard triggered"
+
