@@ -1,0 +1,22 @@
+#!/bin/bash
+
+DEBUG=${DEBUG:-"0"}
+
+[ "${DEBUG}" = "1" ] && set -x
+
+NAME=peer_${1//[^[:alnum:]_-]}
+
+if [ "$NAME" = "peer_" ]
+then
+    echo "Usage: delpeer <peer ID>"
+    exit 1
+fi
+
+if [ -e "/etc/wireguard/$NAME/pub.key" ]
+then
+    rm -rfv "/etc/wireguard/$NAME"
+    echo "Configuration for $1 deleted!"
+else
+    echo "No configuration for $1 found!"
+    exit 1
+fi
