@@ -53,11 +53,14 @@ wireguard_up() {
     done
 
     for peer in /etc/wireguard/peer_*; do
-        PEER_PUBLIC_KEY=$(cat "$peer/pub.key")
-        CONFIG="$peer/wg0.conf"
-        IP=$(awk '/Address/{print $3}' "$CONFIG")
-	echo "* Add peer $(basename "${peer}" | sed -e 's|^peer_||g')"
-        wg set wg0 peer "$PEER_PUBLIC_KEY" allowed-ips "$IP"
+	# make sure it's a valid entry
+	if [ -e "$peer/pub.key" ]; then
+            PEER_PUBLIC_KEY=$(cat "$peer/pub.key")
+            CONFIG="$peer/wg0.conf"
+            IP=$(awk '/Address/{print $3}' "$CONFIG")
+	    echo "* Add peer $(basename "${peer}" | sed -e 's|^peer_||g')"
+            wg set wg0 peer "$PEER_PUBLIC_KEY" allowed-ips "$IP"
+	fi
     done
 }
 
