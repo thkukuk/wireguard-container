@@ -90,7 +90,7 @@ NAT=${NAT:-0}
 if [ "$NAT" -eq 1 ]; then
 	echo "* NAT enabled"
 else
-	echo "* NAT diabled"
+	echo "* NAT disabled"
 fi
 
 if [ ! -e /etc/wireguard/wg0.conf ]; then
