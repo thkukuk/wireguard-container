@@ -61,7 +61,7 @@ EOF
 fi
 
 echo
-echo "Peer \"$1\" config, create them on the peer using the following command:"
+echo "Peer \"$1\" config, create the wg0.conf file on the peer using the following command:"
 echo "cat > /etc/wireguard/wg0.conf << EOF"
 cat /etc/wireguard/"$NAME"/wg0.conf
 echo "EOF"

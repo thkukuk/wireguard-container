@@ -19,14 +19,14 @@ for i in "$@"; do
         exit 1
     fi
 
-    if [ ! -e "/etc/wireguard/$NAME/wg0.key" ]
+    if [ ! -e "/etc/wireguard/$NAME/wg0.conf" ]
     then
 	echo "ERROR: peer ID '$i' does not exist"
         exit 1
     fi
 
     echo
-    echo "Peer \"$i\" config, create them on the peer using the following command:"
+    echo "Peer \"$i\" config, create the wg0.conf file on the peer using the following command:"
     echo "cat > /etc/wireguard/wg0.conf << EOF"
 cat /etc/wireguard/"$NAME"/wg0.conf
     echo "EOF"
