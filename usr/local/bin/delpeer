@@ -14,6 +14,7 @@ fi
 
 if [ -e "/etc/wireguard/$NAME/pub.key" ]
 then
+    wg set wg0 peer $(cat "/etc/wireguard/$NAME/pub.key") remove
     rm -rfv "/etc/wireguard/$NAME"
     echo "Configuration for $1 deleted!"
 else
