@@ -42,6 +42,27 @@ where `<ID>` is an unique, alphanumeric only identifier for the peer.
 
 The output will be the configuration file for the client and a *QR CODE*.
 
+#### Show peer configuration
+
+The following command can be used to display the configuration files and QR codes of peers again:
+
+```sh
+podman exec wireguard showpeer <ID> ...
+```
+
+where `<ID>` is the unique, alphanumeric only identifier for the peer.
+
+#### Remove peer from the server
+
+```sh
+podman exec wireguard delpeer <ID>
+```
+
+where `<ID>` is an unique, alphanumeric only identifier for the peer.
+
+This will remove the peer from the active wireguard setup and delete all
+configuration files on the server.
+
 ### Run as peer
 
 ```sh
@@ -83,3 +104,35 @@ configure wireguard at startup:
 | `-e SUBNET4=192.168.216.0` | Internal IPv4 subnet for the wireguard server and peers. |
 | `-e ALLOWEDIPS=0.0.0.0/0` | The IPs/Ranges that the peers will be able to reach using the VPN connection. If not specified the default value is: '0.0.0.0/0, ::0/0', which will cause all traffic to route through the VPN. |
 | `-v /etc/wireguard` | Contains all relevant wireguard configuration files. |
+
+## Additonal informations
+
+### docker-compose
+
+An example docker-compose.yaml file for the wireguard server:
+
+```yaml
+---
+version: "1.0"
+services:
+  wireguard:
+    image: registry.opensuse.org/home/kukuk/container/container/opensuse/wireguard
+    container_name: wireguard
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      - DEBUG=0
+      - TZ=Europe/Berlin
+      - NET=1
+      - SERVER_IP=wireguard.example.com  # optional
+      - SERVER_PORT=51820                # optional
+      - PEERDNS=auto                     # optional
+      - SUBNET4=192.168.216.0            # optional
+      - ALLOWEDIPS=192.168.216.0/24      # Or 0.0.0.0/0 for all trafic
+    volumes:
+      - /srv/wireguard:/etc/wireguard
+    ports:
+      - 51820:51820/udp
+    restart: unless-stopped
+```
