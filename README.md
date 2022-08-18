@@ -15,6 +15,8 @@ Information related to Wireguard can be found at the official
 
 ## Setup
 
+In the following examples, `podman` and `docker` can be used interchangeably.
+
 ### Run as server
 
 ```sh
@@ -113,7 +115,7 @@ An example docker-compose.yaml file for the wireguard server:
 
 ```yaml
 ---
-version: "1.0"
+version: "2.1"
 services:
   wireguard:
     image: registry.opensuse.org/home/kukuk/container/container/opensuse/wireguard
