@@ -24,13 +24,13 @@ podman run -d --rm \
   --cap-add net_admin \
   --cap-add net_raw \
   -e SERVER_IP=x.x.x.x \
-  -v /srv/wireguard:/etc/wireguard \
+  -v /srv/wireguard:/etc/wireguard:Z \
   -p 51820:51820/udp \
   --name wireguard \
   registry.opensuse.org/home/kukuk/container/container/opensuse/wireguard
 ```
 
-The `-v /srv/wireguard:/etc/wireguard` is to store the configuration
+The `-v /srv/wireguard:/etc/wireguard:Z` is to store the configuration
 permanently on disk, `/srv/wireguard` can be any existing local directory
 where the wireguard configuration files should be stored.
 
@@ -72,12 +72,12 @@ podman run -d --rm \
   --net=host \
   --cap-add net_admin \
   --cap-add net_raw \
-  -v /srv/wireguard:/etc/wireguard \
+  -v /srv/wireguard:/etc/wireguard:Z \
   --name wireguard \
   registry.opensuse.org/home/kukuk/container/container/opensuse/wireguard
 ```
 
-The `-v /srv/wireguard:/etc/wireguard` is to map the directory containing the
+The `-v /srv/wireguard:/etc/wireguard:Z` is to map the directory containing the
 `wg0.conf` configuration file into `/etc/wireguard` of the container. This can
 be any directory on the container host containing the configuration file.
 
