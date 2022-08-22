@@ -27,7 +27,7 @@ podman run -d --rm \
   -v /srv/wireguard:/etc/wireguard:Z \
   -p 51820:51820/udp \
   --name wireguard \
-  registry.opensuse.org/home/kukuk/container/container/opensuse/wireguard
+  registry.opensuse.org/home/kukuk/container/wireguard:latest
 ```
 
 The `-v /srv/wireguard:/etc/wireguard:Z` is to store the configuration
@@ -74,7 +74,7 @@ podman run -d --rm \
   --cap-add net_raw \
   -v /srv/wireguard:/etc/wireguard:Z \
   --name wireguard \
-  registry.opensuse.org/home/kukuk/container/container/opensuse/wireguard
+  registry.opensuse.org/home/kukuk/container/wireguard:latest
 ```
 
 The `-v /srv/wireguard:/etc/wireguard:Z` is to map the directory containing the
@@ -118,7 +118,7 @@ An example docker-compose.yaml file for the wireguard server:
 version: "2.1"
 services:
   wireguard:
-    image: registry.opensuse.org/home/kukuk/container/container/opensuse/wireguard
+    image: registry.opensuse.org/home/kukuk/container/wireguard:latest
     container_name: wireguard
     cap_add:
       - NET_ADMIN
@@ -133,7 +133,7 @@ services:
       - SUBNET4=192.168.216.0            # optional
       - ALLOWEDIPS=192.168.216.0/24      # Or 0.0.0.0/0 for all trafic
     volumes:
-      - /srv/wireguard:/etc/wireguard
+      - /srv/wireguard:/etc/wireguard:Z
     ports:
       - 51820:51820/udp
     restart: unless-stopped
