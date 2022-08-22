@@ -11,6 +11,7 @@ Information related to Wireguard can be found at the official
 
 - Linux host with a recent kernel (> 5.6)
 - Wireguard module installed
+  - If SELinux is in use, the wireguard kernel module must be loaded before the container is started, e.g. `echo wireguard > /etc/modules-load.d/wireguard.conf` will do that at every boot.
 - Container runtime installed
 
 ## Setup
