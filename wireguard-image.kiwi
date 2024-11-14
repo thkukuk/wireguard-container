@@ -2,7 +2,7 @@
 
 <!-- OBS-ExcludeArch: i586 s390 -->
 
-<image schemaversion="6.9" name="wireguard-image" xmlns:suse_label_helper="com.suse.label_helper">
+<image schemaversion="7.4" name="wireguard-image">
   <description type="system">
     <author>Thorsten Kukuk</author>
     <contact>kukuk@suse.com</contact>
@@ -25,7 +25,7 @@
           <volume name="/etc/wireguard"/>
         </volumes>
         <labels>
-          <suse_label_helper:add_prefix prefix="de.thkukuk.wireguard">
+          <suse_label_helper:add_prefix xmlns:suse_label_helper="com.suse.label_helper" prefix="de.thkukuk.wireguard">
             <label name="org.opencontainers.image.title" value="Wireguard VPN Container"/>
             <label name="org.opencontainers.image.description" value="Small image containing wireguard tools to act as server and client."/>
             <label name="org.opencontainers.image.version" value="%PKG_VERSION%-%RELEASE%"/>
