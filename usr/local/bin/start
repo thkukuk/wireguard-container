@@ -37,13 +37,9 @@ setup_wg0_conf() {
 Address = ${SUBNET4_IP}/24
 ListenPort = ${SERVER_PORT}
 PrivateKey = ${SERVER_PRIVATE_KEY}
+PostUp =  iptables -t nat -A POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; 
+PostDown =  iptables -t nat -D POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -D INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; 
 EOF
-	if [ "$NAT" -eq 1 ]; then
-	    cat >> /etc/wireguard/wg0.conf << EOF
-PostUp = iptables -t nat -A POSTROUTING -o $INTERFACE -j MASQUERADE; iptables -A FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400; iptables -t mangle -A POSTROUTING -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400
-PostDown = iptables -t nat -D POSTROUTING -o $INTERFACE -j MASQUERADE; iptables -D FORWARD -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400; iptables -t mangle -D POSTROUTING -p tcp --tcp-flags SYN,RST SYN -j TCPMSS --set-mss 1400
-EOF
-	fi
 }
 
 wireguard_up() {
@@ -75,9 +71,7 @@ wireguard_down() {
 quit () {
     echo "Stopping wireguard"
     wireguard_down
-    if [ "$NAT" -eq 1 ]; then
-	iptables -t nat -D POSTROUTING -o "$INTERFACE" -j MASQUERADE
-    fi
+    iptables -t nat -D POSTROUTING -o "$INTERFACE" -j MASQUERADE
     exit 0
 }
 
@@ -86,13 +80,6 @@ setup_timezone
 echo "Starting setup..."
 INTERFACE=${INTERFACE:-eth0}
 echo "* Interface is set to ${INTERFACE}"
-NAT=${NAT:-0}
-if [ "$NAT" -eq 1 ]; then
-	echo "* NAT enabled"
-else
-	echo "* NAT disabled"
-fi
-
 if [ ! -e /etc/wireguard/wg0.conf ]; then
     setup_wg0_conf
 fi
@@ -100,12 +87,6 @@ fi
 trap quit TERM INT QUIT
 
 wireguard_up
-
-if [ "$NAT" -eq 1 ]
-then
-    echo "Setup NAT"
-    iptables -t nat -A POSTROUTING -o "$INTERFACE" -j MASQUERADE
-fi
 
 while inotifywait -e modify -e create /etc/wireguard
 do
