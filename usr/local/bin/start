@@ -71,7 +71,6 @@ wireguard_down() {
 quit () {
     echo "Stopping wireguard"
     wireguard_down
-    iptables -t nat -D POSTROUTING -o "$INTERFACE" -j MASQUERADE
     exit 0
 }
 
