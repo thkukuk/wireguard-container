@@ -49,7 +49,6 @@
     <package name="qrencode"/>
     <package name="iptables"/>
     <package name="inotify-tools"/>
-    <package name="curl"/>
     <package name="mandoc"/>
     <package name="less"/>
     <package name="timezone"/>
