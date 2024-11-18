@@ -1,6 +1,22 @@
 # get public ip
 if [ -z "$SERVER_IP" ] || [ "$SERVER_IP" = "auto" ]; then
-    SERVER_IP=$(curl -s icanhazip.com)
+    GET_CMD=$(command -v busybox)
+    if [ -n "$GET_CMD" ]; then
+	SERVER_IP=$(${GET_CMD} wget -qO- icanhazip.com)
+    else
+	GET_CMD=$(command -v wget)
+	if [ -n "$GET_CMD" ]; then
+	    SERVER_IP=$(${GET_CMD} -qO- icanhazip.com)
+	else
+	    GET_CMD=$(command -v curl)
+	    if [ -n "$GET_CMD" ]; then
+		SERVER_IP=$(${GET_CMD} -s icanhazip.com)
+	    else
+		echo "ERROR: no SERVER_IP set or detectable" 1>&2
+		exit 1
+	    fi
+	fi
+    fi
 fi
 echo "* External server address is set to $SERVER_IP"
 SERVER_PORT=${SERVER_PORT:-51820}
