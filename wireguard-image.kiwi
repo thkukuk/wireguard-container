@@ -50,9 +50,8 @@
     <package name="iptables"/>
     <package name="inotify-tools"/>
     <package name="mandoc"/>
-    <package name="less"/>
+    <package name="prometheus_wireguard_exporter"/>
     <package name="timezone"/>
     <package name="-busybox-man"/>
-    <package name="-busybox-less"/>
   </packages>
 </image>

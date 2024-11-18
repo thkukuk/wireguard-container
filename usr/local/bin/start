@@ -4,6 +4,8 @@ DEBUG=${DEBUG:-"0"}
 
 [ "${DEBUG}" = "1" ] && set -x
 
+EXPORT_METRICS=${EXPORT_METRICS:-"0"}
+
 export PATH=/usr/local/bin:/usr/sbin:/sbin:${PATH}
 
 # Create files with secure permissions
@@ -21,6 +23,26 @@ setup_timezone() {
     fi
 }
 
+terminate() {
+    base=$(basename "$1")
+    pid=$(/bin/pidof "$base")
+
+    if [ -n "$pid" ]; then
+        echo "Terminating $base..."
+        if kill "$pid" ; then
+            echo "Terminating $base failed!"
+        fi
+    else
+        echo "Failure determining PID of $base"
+    fi
+}
+
+stop_export_metrics() {
+    terminate /usr/bin/prometheus_wireguard_exporter
+}
+
+
+
 setup_wg0_conf() {
 	echo "Initialize wireguard config - /etc/wireguard/wg0.conf"
 
@@ -37,8 +59,8 @@ setup_wg0_conf() {
 Address = ${SUBNET4_IP}/24
 ListenPort = ${SERVER_PORT}
 PrivateKey = ${SERVER_PRIVATE_KEY}
-PostUp =  iptables -t nat -A POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT; 
-PostDown =  iptables -t nat -D POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -D INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; 
+PostUp =  iptables -t nat -A POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT;
+PostDown =  iptables -t nat -D POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -D INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT;
 EOF
 }
 
@@ -69,6 +91,10 @@ wireguard_down() {
 }
 
 quit () {
+    if [ "$EXPORT_METRICS" = "1" ]; then
+	echo "Stopping exporting metrics"
+	stop_export_metrics
+    fi
     echo "Stopping wireguard"
     wireguard_down
     exit 0
@@ -86,6 +112,9 @@ fi
 trap quit TERM INT QUIT
 
 wireguard_up
+if [ "$EXPORT_METRICS" = "1" ]; then
+    /usr/bin/prometheus_wireguard_exporter &
+fi
 
 while inotifywait -e modify -e create /etc/wireguard
 do
