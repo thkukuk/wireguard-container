@@ -24,21 +24,20 @@ setup_timezone() {
 }
 
 terminate() {
-    base=$(basename "$1")
-    pid=$(/bin/pidof "$base")
+    pid=$(/bin/pidof "$1")
 
     if [ -n "$pid" ]; then
         echo "Terminating $base..."
-        if kill "$pid" ; then
-            echo "Terminating $base failed!"
+        if ! kill "$pid" ; then
+            echo "Terminating $1 failed!" 1>&2
         fi
     else
-        echo "Failure determining PID of $base"
+        echo "Failure determining PID of $1" 1>&2
     fi
 }
 
 stop_export_metrics() {
-    terminate /usr/bin/prometheus_wireguard_exporter
+    terminate prometheus_wireguard_exporter
 }
 
 
