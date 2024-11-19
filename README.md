@@ -22,8 +22,11 @@ In the following examples, `podman` and `docker` can be used interchangeably.
 
 ```sh
 podman run -d --rm \
-  --cap-add net_admin \
-  --cap-add net_raw \
+  --cap-add=net_admin \
+  --cap-add=net_raw \
+  --cap-add=sys_module \
+  --sysctl=net.ipv4.conf.all.src_valid_mark=1 \
+  --sysctl=net.ipv4.ip_forward=1 \
   -e SERVER_IP=x.x.x.x \
   -v /srv/wireguard:/etc/wireguard:Z \
   -p 51820:51820/udp \
@@ -34,6 +37,8 @@ podman run -d --rm \
 The `-v /srv/wireguard:/etc/wireguard:Z` is to store the configuration
 permanently on disk, `/srv/wireguard` can be any existing local directory
 where the wireguard configuration files should be stored.
+
+The provided environment variables are used to create the `wg0.conf` for the server at the first start and the peers with the `addpeer` command. If the config file for the server or peer already exists, changing the environment variables will have no effect.
 
 #### Add peers on the server
 
@@ -71,8 +76,8 @@ configuration files on the server.
 ```sh
 podman run -d --rm \
   --net=host \
-  --cap-add net_admin \
-  --cap-add net_raw \
+  --cap-add=net_admin \
+  --cap-add=net_raw \
   -v /srv/wireguard:/etc/wireguard:Z \
   --name wireguard \
   registry.opensuse.org/home/kukuk/container/wireguard:latest
@@ -86,8 +91,8 @@ The `--net=host` option makes the `wg0` interface visible and usable for all
 processes on the container host. Without this option, the wireguard interface
 is only visible and useable inside the container.
 
-By default all traffic will be routed through the VPN as long as `ALLOWEDIPS` is
-set to something different then `0.0.0.0`.
+By default all traffic will be routed through the VPN as long as `ALLOWEDIPS`
+is not set to something different then `0.0.0.0`.
 
 ## Parameters
 
@@ -106,35 +111,46 @@ configure wireguard at startup:
 | `-e SUBNET4=192.168.216.0` | Internal IPv4 subnet for the wireguard server and peers. |
 | `-e ALLOWEDIPS=0.0.0.0/0` | The IPs/Ranges that the peers will be able to reach using the VPN connection. If not specified the default value is: '0.0.0.0/0, ::0/0', which will cause all traffic to route through the VPN. |
 | `-v /etc/wireguard` | Contains all relevant wireguard configuration files. |
+| `-e INTERFACE=eth0` | Define a different interface for `iptables` rules inside the container. |
+| `-e EXPORT_METRICS=[0/1]` | Export metrics for prometheus. |
+| `-p 9586:9586` | Port to export prometheus metrics. |
 
 ## Additonal informations
 
-### docker-compose
+### podman quadlet
 
-An example docker-compose.yaml file for the wireguard server:
+An example podman quadlet file (`/etc/containers/systemd/wireguard.container`) for the wireguard server:
 
-```yaml
----
-version: "2.1"
-services:
-  wireguard:
-    image: registry.opensuse.org/home/kukuk/container/wireguard:latest
-    container_name: wireguard
-    cap_add:
-      - NET_ADMIN
-      - NET_RAW
-    environment:
-      - DEBUG=0
-      - TZ=Europe/Berlin
-      - NET=1
-      - SERVER_IP=wireguard.example.com  # optional
-      - SERVER_PORT=51820                # optional
-      - PEERDNS=auto                     # optional
-      - SUBNET4=192.168.216.0            # optional
-      - ALLOWEDIPS=192.168.216.0/24      # Or 0.0.0.0/0 for all trafic
-    volumes:
-      - /srv/wireguard:/etc/wireguard:Z
-    ports:
-      - 51820:51820/udp
-    restart: unless-stopped
+```
+[Unit]
+Description=Wireguard Server Container
+After=local-fs.target
+
+[Container]
+ContainerName=wireguard
+Image=registry.opensuse.org/home/kukuk/container/wireguard:latest
+Pull=newer
+#Exec=
+AddCapability=NET_ADMIN
+AddCapability=NET_RAW
+AddCapability=SYS_MODULE
+Sysctl=net.ipv4.conf.all.src_valid_mark=1
+Sysctl=net.ipv4.ip_forward=1
+Volume=/srv/wireguard:/etc/wireguard:Z
+# Port for wireguard tunnel
+PublishPort=51820:51820/udp
+Environment=SERVER_IP=gw.example.com
+Environment=SUBNET4=10.80.12.0
+Environment=PEERDNS=10.80.12.1
+Environment=ALLOWEDIPS=10.80.12.0/24
+# Export metrics for prometheus
+PublishPort=9586:9586
+Environment=EXPORT_METRICS=1
+
+[Service]
+Restart=on-failure
+
+[Install]
+# Start by default on boot
+WantedBy=multi-user.target default.target
 ```
