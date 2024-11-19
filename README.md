@@ -124,6 +124,16 @@ configure wireguard at startup:
 
 ## Additonal informations
 
+### Prometheus exporter
+
+If the environment variable `EXPORT_METRICS=1` is set and the port `9586` is exposed, a metrics file for Prometheus can be accessed at `http://0.0.0.0:9586`.
+
+### NetworkManager
+
+The easiest way to manage the wireguard tunnel with NetworkManager is:
+* Get the peer config from the server (`podman exec wireguard showpeer <ID>`) and store them as `/etc/wireguard/wg0.conf`.
+* Import the config into NetworkManager: `nmcli connection import type wireguard file /etc/wireguard/wg0.conf`
+
 ### podman quadlet
 
 An example podman quadlet file (`/etc/containers/systemd/wireguard.container`) for the wireguard server:
