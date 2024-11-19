@@ -16,8 +16,6 @@ Information related to Wireguard can be found at the official
 
 ## Setup
 
-In the following examples, `podman` and `docker` can be used interchangeably.
-
 ### Run as server
 
 ```sh
@@ -73,17 +71,26 @@ configuration files on the server.
 
 ### Run as peer
 
+Get the peer config from the server (`podman exec wireguard showpeer <ID>`) and
+store them as `/etc/wireguard/wg0.conf`.
+
+**IMPORTANT**: The DNS option does not work and must be removed in advance from
+`wg0.conf` and manually added to `/etc/resolv.conf` on the host if wireguard is
+running as a container on the peer. Wireguard cannot change the `/etc/resolv.conf`
+file inside the container and applications outside the container will not see the
+new DNS entry, as it is only visible inside the container.
+
 ```sh
 podman run -d --rm \
   --net=host \
   --cap-add=net_admin \
   --cap-add=net_raw \
-  -v /srv/wireguard:/etc/wireguard:Z \
+  -v /etc/wireguard:/etc/wireguard:Z \
   --name wireguard \
   registry.opensuse.org/home/kukuk/container/wireguard:latest
 ```
 
-The `-v /srv/wireguard:/etc/wireguard:Z` is to map the directory containing the
+The `-v /etc/wireguard:/etc/wireguard:Z` is to map the directory containing the
 `wg0.conf` configuration file into `/etc/wireguard` of the container. This can
 be any directory on the container host containing the configuration file.
 
