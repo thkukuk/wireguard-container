@@ -66,7 +66,10 @@ EOF
 wireguard_up() {
     for conf in /etc/wireguard/wg*.conf; do
 	echo "Start wireguard interface ($conf)"
-	wg-quick up "$conf"
+	if ! wg-quick up "$conf" ; then
+            echo "ERROR: setting up $conf failed!" 1>&2
+            exit 1
+	fi
     done
 
     for peer in /etc/wireguard/peer_*; do
@@ -76,7 +79,10 @@ wireguard_up() {
             CONFIG="$peer/wg0.conf"
             IP=$(awk '/Address/{print $3}' "$CONFIG")
 	    echo "* Add peer $(basename "${peer}" | sed -e 's|^peer_||g')"
-            wg set wg0 peer "$PEER_PUBLIC_KEY" allowed-ips "$IP"
+            if ! wg set wg0 peer "$PEER_PUBLIC_KEY" allowed-ips "$IP" ; then
+		echo "ERROR: adding $peer failed!" 1>&2
+		exit 1
+	    fi
 	fi
     done
 }
