@@ -118,7 +118,7 @@ configure wireguard at startup:
 | `-e SUBNET4=192.168.216.0` | Internal IPv4 subnet for the wireguard server and peers. |
 | `-e ALLOWEDIPS=0.0.0.0/0` | The IPs/Ranges that the peers will be able to reach using the VPN connection. If not specified the default value is: '0.0.0.0/0, ::0/0', which will cause all traffic to route through the VPN. |
 | `-v /etc/wireguard` | Contains all relevant wireguard configuration files. |
-| `-e INTERFACE=eth0` | Define a different interface for `iptables` rules inside the container. |
+| `-e INTERFACE=eth0` | Define a different interface for `nft` rules inside the container. |
 | `-e EXPORT_METRICS=[0/1]` | Export metrics for prometheus. |
 | `-p 9586:9586` | Port to export prometheus metrics. |
 

@@ -47,9 +47,9 @@
     <package name="bash"/>
     <package name="wireguard-tools"/>
     <package name="qrencode"/>
-    <package name="iptables"/>
     <package name="inotify-tools"/>
     <package name="mandoc"/>
+    <package name="nftables"/>
     <package name="prometheus_wireguard_exporter"/>
     <package name="timezone"/>
     <package name="-busybox-man"/>

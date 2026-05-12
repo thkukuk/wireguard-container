@@ -58,8 +58,8 @@ setup_wg0_conf() {
 Address = ${SUBNET4_IP}/24
 ListenPort = ${SERVER_PORT}
 PrivateKey = ${SERVER_PRIVATE_KEY}
-PostUp =  iptables -t nat -A POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -A INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -A FORWARD -i wg0 -j ACCEPT; iptables -A FORWARD -o wg0 -j ACCEPT;
-PostDown =  iptables -t nat -D POSTROUTING -s $SUBNET4/24 -o $INTERFACE -j MASQUERADE; iptables -D INPUT -p udp -m udp --dport 51820 -j ACCEPT; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT;
+PostUp = nft add table inet wg_table; nft add chain inet wg_table prerouting { type nat hook prerouting priority 100 \; }; nft add chain inet wg_table postrouting { type nat hook postrouting priority 100 \; }; nft add rule inet wg_table postrouting ip saddr $SUBNET4/24 oifname $INTERFACE masquerade; nft add chain inet wg_table input { type filter hook input priority 0 \; policy accept \; }; nft add rule inet wg_table input udp dport 51820 accept; nft add chain inet wg_table forward { type filter hook forward priority 0 \; policy accept \; }; nft add rule inet wg_table forward iifname "wg0" accept; nft add rule inet wg_table forward oifname "wg0" accept;
+PostDown = nft delete table inet wg_table
 EOF
 }
 
